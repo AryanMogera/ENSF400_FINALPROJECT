@@ -1,7 +1,13 @@
 # Demo Application CI/CD Project
 
+
 ## Project Overview
 This project implements a CI/CD pipeline for the [Demo application](https://github.com/7ep/demo), showcasing DevOps practices including Git workflows, containerization, and automated testing.
+
+## Docker Hub Repository
+
+Our Docker image is available on Docker Hub:
+[https://hub.docker.com/r/aryanmogera/ensf_finalproject](https://hub.docker.com/r/aryanmogera/ensf_finalproject)
 
 ## Team Members
 - Sheharyar
@@ -55,10 +61,7 @@ docker run -it  -p 8080:8080 aryanmogera/ensf_finalproject:v1.0
 
 Once running, the application can be accessed at: [http://localhost:8080/demo](http://localhost:8080/demo)
 
-## Docker Hub Repository
 
-Our Docker image is available on Docker Hub:
-[https://hub.docker.com/r/aryanmogera/ensf_finalproject](https://hub.docker.com/r/aryanmogera/ensf_finalproject)
 
 ## Project Status
 - [x] GitHub repository setup
