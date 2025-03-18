@@ -33,7 +33,7 @@ We are following a feature branch workflow with the following branche structure:
 
 ## Docker Configuration
 
-The application has been containerized and can be run with Docker:
+The application has been containerized and can be run with Docker locally:
 
 ```bash
 # Build the Docker image
@@ -41,6 +41,16 @@ docker build -t yourusername/ensf_finalproject .
 
 # Run the container
 docker run -it -p 8080:8080 yourusername/ensf_finalproject
+```
+
+If pulling from the Docker Hub Registry use these commands:
+
+```bash
+# Build the Docker image
+docker pull aryanmogera/ensf_finalproject:v1.0
+
+# Run the container
+docker run -it  -p 8080:8080 aryanmogera/ensf_finalproject:v1.0
 ```
 
 Once running, the application can be accessed at: [http://localhost:8080/demo](http://localhost:8080/demo)
