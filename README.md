@@ -4,7 +4,7 @@
 ## Project Overview
 This project implements a CI/CD pipeline for the [Demo application](https://github.com/7ep/demo), showcasing DevOps practices including Git workflows, containerization, and automated testing.
 
-## Docker Hub Repository
+## Docker Hub Registry
 
 Our Docker image is available on Docker Hub:
 [https://hub.docker.com/r/aryanmogera/ensf_finalproject](https://hub.docker.com/r/aryanmogera/ensf_finalproject)
