@@ -61,11 +61,35 @@ pipeline {
     }
     
     stage('Performance Tests') {
-      steps {
-        dir('demo-master') {
-          sh './gradlew runPerfTests'
+        steps {
+            dir('demo-master') {
+            sh '''
+                # Check where the JMX files are located
+                echo "Searching for JMX files:"
+                find . -name "*.jmx" | sort
+                
+                # Create a temporary modified version of the runPerfTests task
+                cat > temp_performance_task.gradle << 'EOL'
+        task runPerfTests(type:Exec) {
+            workingDir '.'
+            
+            // Linux command for Jenkins with path to our downloaded JMeter
+            commandLine '../apache-jmeter-5.6.3/bin/jmeter', '-f', '-n', '-t', 'docs/performance_testing/50_users_at_once.jmx', '-l', 'build/jmeter_perf_test.csv', '-e', '-o', 'build/reports/perf_report'
+            
+            // Store the output instead of printing to the console
+            standardOutput = new ByteArrayOutputStream()
+            
+            // Extension method to get the output
+            ext.output = {
+                return standardOutput.toString()
+            }
         }
-      }
+        EOL
+                # Run the performance tests with the temporary task
+                ./gradlew -I temp_performance_task.gradle runPerfTests
+            '''
+            }
+        }
     }
     
     stage('Build Documentation') {
