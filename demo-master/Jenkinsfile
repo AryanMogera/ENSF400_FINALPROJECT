@@ -3,7 +3,7 @@ pipeline {
   
   environment {
     DOCKER_HUB_CREDS = credentials('docker-hub-credentials')
-    DOCKER_IMAGE_NAME = "aryanmogera/ensf_finalproject"
+    DOCKER_IMAGE_NAME = "aryanmogera/ensf_finalproject:v1.0"
   }
 
   stages {
