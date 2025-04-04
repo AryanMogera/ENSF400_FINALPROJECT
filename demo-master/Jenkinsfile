@@ -49,8 +49,8 @@ pipeline {
     stage('Setup JMeter') {
         steps {
             sh '''
-            # Download JMeter
-            wget https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz
+            # Download JMeter using curl
+            curl -L https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz -o apache-jmeter-5.6.3.tgz
             # Extract it
             tar -xzf apache-jmeter-5.6.3.tgz
             # Make the JMeter scripts executable
