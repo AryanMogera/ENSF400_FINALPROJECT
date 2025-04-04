@@ -99,6 +99,20 @@ pipeline {
         }
       }
     }
+
+    stage('Setup Docker Permissions') {
+        steps {
+            sh '''
+            # Add jenkins user to docker group if it exists
+            if getent group docker > /dev/null; then
+                usermod -aG docker jenkins || true
+            fi
+            
+            # Set permissions on Docker socket
+            chmod 666 /var/run/docker.sock || true
+            '''
+        }
+    }
     
     stage('Build Docker Image') {
       steps {
