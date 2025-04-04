@@ -32,7 +32,7 @@ pipeline {
     stage('SonarQube Analysis') { 
       steps {
         dir('demo-master') { 
-          sh './gradlew sonarqube -Dsonar.host.url=http://host.docker.internal:9000 -Dsonar.login=admin -Dsonar.password=admin'
+          sh './gradlew sonarqube -Dsonar.host.url=https://didactic-garbanzo-76jj64566gvfww76-9000.app.github.dev/ -Dsonar.login=admin -Dsonar.password=qwerty123'
         }
       } 
     }
