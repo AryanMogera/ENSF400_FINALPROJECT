@@ -9,49 +9,65 @@ pipeline {
   stages {
     stage('Build') { 
       steps { 
-        sh './gradlew clean assemble' 
+        dir('demo-master') {
+          sh 'chmod +x ./gradlew'
+          sh './gradlew clean assemble'
+        }
       } 
     }
     
     stage('Unit Tests') { 
-      steps { 
-        sh './gradlew test' 
+      steps {
+        dir('demo-master') { 
+          sh './gradlew test'
+        } 
       } 
       post { 
         always { 
-          junit 'build/test-results/test/*.xml' 
+          junit 'demo-master/build/test-results/test/*.xml' 
         } 
       } 
     }
     
     stage('SonarQube Analysis') { 
-      steps { 
-        sh './gradlew sonarqube -Dsonar.host.url=https://didactic-garbanzo-76jj64566gvfww76-9000.app.github.dev/ -Dsonar.login=admin -Dsonar.password=qwerty123' 
+      steps {
+        dir('demo-master') { 
+          sh './gradlew sonarqube -Dsonar.host.url=http://host.docker.internal:9000 -Dsonar.login=admin -Dsonar.password=admin'
+        }
       } 
     }
     
+    // Continue with the same pattern for all other stages
     stage('Security Analysis') { 
-      steps { 
-        sh './gradlew dependencyCheckAnalyze' 
+      steps {
+        dir('demo-master') { 
+          sh './gradlew dependencyCheckAnalyze'
+        }
       } 
     }
     
     stage('Performance Tests') {
       steps {
-        sh './gradlew runPerfTests'
+        dir('demo-master') {
+          sh './gradlew runPerfTests'
+        }
       }
     }
     
     stage('Build Documentation') {
       steps {
-        sh './gradlew javadoc'
+        dir('demo-master') {
+          sh './gradlew javadoc'
+        }
       }
     }
     
     stage('Build Docker Image') {
       steps {
-        script {
-          sh "docker build -t ${DOCKER_IMAGE_NAME}:${env.GIT_COMMIT.take(7)} ."
+        dir('demo-master') {
+          script {
+            sh "docker build -t ${DOCKER_IMAGE_NAME}:${env.GIT_COMMIT.take(7)} ."
+          }
         }
       }
     }
@@ -59,8 +75,10 @@ pipeline {
     stage('Push Docker Image') {
       steps {
         script {
-          sh 'echo ${DOCKER_HUB_CREDS_PSW} | docker login -u ${DOCKER_HUB_CREDS_USR} --password-stdin'
-          sh "docker push ${DOCKER_IMAGE_NAME}:${env.GIT_COMMIT.take(7)}"
+          withCredentials([string(credentialsId: 'docker-hub-credentials', variable: 'DOCKER_PASSWORD')]) {
+            sh 'echo $DOCKER_PASSWORD | docker login -u aryanmogera --password-stdin'
+            sh "docker push ${DOCKER_IMAGE_NAME}:${env.GIT_COMMIT.take(7)}"
+          }
         }
       }
     }
@@ -82,7 +100,7 @@ pipeline {
   
   post {
     always {
-      archiveArtifacts artifacts: 'build/reports/**/*', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'demo-master/build/reports/**/*', allowEmptyArchive: true
     }
   }
 }
