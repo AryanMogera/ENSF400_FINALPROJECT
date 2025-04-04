@@ -304,6 +304,7 @@ pipeline {
           }
       }
   }
+  }
   
   post {
     always {
