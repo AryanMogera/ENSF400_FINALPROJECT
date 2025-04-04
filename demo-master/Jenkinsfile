@@ -100,20 +100,20 @@ pipeline {
       }
     }
 
-    stage('Install Docker CLI') {
-        steps {
-            sh '''
-            curl -fsSL https://get.docker.com -o get-docker.sh
-            sh get-docker.sh
-            '''
-        }
-    }
+
 
     stage('Build Docker Image') {
         steps {
             dir('demo-master') {
               script {
-                sh "docker build -t ${DOCKER_IMAGE_NAME}:${env.GIT_COMMIT.take(7)} ."
+                sh """
+                # Find Docker binary
+                DOCKER_BIN=\$(which docker)
+                echo "Docker binary: \$DOCKER_BIN"
+                
+                # Use the full path to Docker
+                \$DOCKER_BIN build -t ${DOCKER_IMAGE_NAME}:${env.GIT_COMMIT.take(7)} .
+                """
               }
             }
         }
