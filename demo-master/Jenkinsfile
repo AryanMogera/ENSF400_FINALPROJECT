@@ -105,16 +105,19 @@ pipeline {
     stage('Build Docker Image') {
         steps {
             dir('demo-master') {
-              script {
-                sh """
-                # Find Docker binary
-                DOCKER_BIN=\$(which docker)
-                echo "Docker binary: \$DOCKER_BIN"
-                
-                # Use the full path to Docker
-                \$DOCKER_BIN build -t ${DOCKER_IMAGE_NAME}:${env.GIT_COMMIT.take(7)} .
-                """
-              }
+                script {
+                    // Install Docker if not available
+                    sh '''
+                        if ! which docker; then
+                            echo "Installing Docker CLI..."
+                            apt-get update
+                            apt-get install -y docker.io
+                        fi
+                        
+                        # Build the Docker image
+                        docker build -t ${DOCKER_IMAGE_NAME}:${env.GIT_COMMIT.take(7)} .
+                    '''
+                }
             }
         }
     }
