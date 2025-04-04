@@ -110,8 +110,8 @@ pipeline {
                     sh '''
                         if ! which docker; then
                             echo "Installing Docker CLI..."
-                            apt-get update
-                            apt-get install -y docker.io
+                            sudo apt-get update
+                            sudo apt-get install -y docker.io
                         fi
                         
                         # Build the Docker image
