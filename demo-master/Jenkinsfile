@@ -103,13 +103,13 @@ pipeline {
     stage('Setup Docker Permissions') {
         steps {
             sh '''
-       
+ 
             if getent group docker > /dev/null; then
                 usermod -aG docker jenkins 
             fi
-            
-
+         
             chmod 666 /var/run/docker.sock 
+            '''
         }
     }
     
