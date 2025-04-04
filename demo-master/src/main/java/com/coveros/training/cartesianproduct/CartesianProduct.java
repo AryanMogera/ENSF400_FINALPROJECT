@@ -1,4 +1,4 @@
-package com.coveros.training.cartesianproduct;
+package com.coveros.training.cartesianproduct; // Cartesian Calculation
 
 import java.util.Set;
 
