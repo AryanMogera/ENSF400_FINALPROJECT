@@ -108,11 +108,6 @@ pipeline {
                 script {
                     // Install Docker if not available
                     sh '''
-                        if ! which docker; then
-                            echo "Installing Docker CLI..."
-                            sudo apt-get update
-                            sudo apt-get install -y docker.io
-                        fi
                         
                         # Build the Docker image
                         docker build -t ${DOCKER_IMAGE_NAME}:${env.GIT_COMMIT.take(7)} .
