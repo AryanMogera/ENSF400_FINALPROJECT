@@ -100,6 +100,15 @@ pipeline {
       }
     }
 
+    stage('Install Docker CLI') {
+        steps {
+            sh '''
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sh get-docker.sh
+            '''
+        }
+    }
+
     stage('Build Docker Image') {
         steps {
             dir('demo-master') {
