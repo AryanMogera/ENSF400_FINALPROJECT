@@ -183,9 +183,14 @@ pipeline {
 
     stage('Build Documentation') {
       steps {
-         sh './gradlew javadoc'
+         // Generate Javadocs and save them in the 'artifacts' directory
+         sh './gradlew javadoc -d artifacts/'
+         
+         // Verify the directory creation
+         sh 'ls -la artifacts/'
       }
     }
+
 
     stage('Collect Zap Security Report') {
       steps {
