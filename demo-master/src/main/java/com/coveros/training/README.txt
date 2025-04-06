@@ -7,4 +7,4 @@ helpers          :  cross-functional helper classes
 library          :  books, borrowers, lending
 mathematics      :  various math functionality
 persistence      :  provides database access
-tomcat           :  configures Tomcat // added  nothing
+tomcat           :  configures Tomcat
