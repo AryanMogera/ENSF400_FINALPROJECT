@@ -60,4 +60,4 @@ For your information:
 
     - If an integration test fails, it must fail our build.
 
-  We continue with this pattern for the BDD tests and the Selenified tests.
+  We continue with this pattern for the BDD tests and the Selenified tests. 
