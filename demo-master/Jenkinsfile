@@ -154,20 +154,183 @@
 // }
 //
 
+// pipeline {
+//   agent any
+  
+//   environment {
+//     DOCKER_HUB_CREDS = credentials('docker-hub-credentials')
+//     DOCKER_IMAGE_NAME = "aryanmogera/ensf_finalproject"
+//   }
+
+//   stages {
+//     stage('Build') { 
+//       steps { 
+//         dir('demo-master') {
+//           sh 'chmod +x ./gradlew'
+//           sh './gradlew clean assemble'
+//         }
+//       } 
+//     }
+    
+//     stage('Unit Tests') { 
+//       steps {
+//         dir('demo-master') { 
+//           sh './gradlew test'
+//         } 
+//       } 
+//       post { 
+//         always { 
+//           junit 'demo-master/build/test-results/test/*.xml' 
+//         } 
+//       } 
+//     }
+    
+//     stage('SonarQube Analysis') { 
+//       steps {
+//         dir('demo-master') { 
+//           sh './gradlew sonarqube -Dsonar.host.url=https://didactic-garbanzo-76jj64566gvfww76-9000.app.github.dev/ -Dsonar.login=admin -Dsonar.password=qwerty123'
+//         }
+//       } 
+//     }
+    
+//     // Continue with the same pattern for all other stages
+//     stage('Security Analysis') { 
+//       steps {
+//         dir('demo-master') { 
+//           sh './gradlew dependencyCheckAnalyze'
+//         }
+//       } 
+//     }
+
+//     stage('Setup JMeter') {
+//         steps {
+//             sh '''
+//             # Download JMeter using curl
+//             curl -L https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz -o apache-jmeter-5.6.3.tgz
+//             # Extract it
+//             tar -xzf apache-jmeter-5.6.3.tgz
+//             # Make the JMeter scripts executable
+//             chmod +x apache-jmeter-5.6.3/bin/jmeter
+//             chmod +x apache-jmeter-5.6.3/bin/jmeter.sh
+//             '''
+//         }
+//     }
+    
+//     stage('Performance Tests') {
+//         steps {
+//             dir('demo-master') {
+//             sh '''
+//                 # Check where the JMX files are located
+//                 echo "Searching for JMX files:"
+//                 find . -name "*.jmx" | sort
+                
+//                 # Create a temporary modified version of the runPerfTests task
+//                 cat > temp_performance_task.gradle << 'EOL'
+//         task runPerfTests(type:Exec) {
+//             workingDir '.'
+            
+//             // Linux command for Jenkins with path to our downloaded JMeter
+//             commandLine '../apache-jmeter-5.6.3/bin/jmeter', '-f', '-n', '-t', 'docs/performance_testing/50_users_at_once.jmx', '-l', 'build/jmeter_perf_test.csv', '-e', '-o', 'build/reports/perf_report'
+            
+//             // Store the output instead of printing to the console
+//             standardOutput = new ByteArrayOutputStream()
+            
+//             // Extension method to get the output
+//             ext.output = {
+//                 return standardOutput.toString()
+//             }
+//         }
+//         EOL
+//                 # Run the performance tests with the temporary task
+//                 ./gradlew -I temp_performance_task.gradle runPerfTests
+//             '''
+//             }
+//         }
+//     }
+    
+//     stage('Build Documentation') {
+//       steps {
+//         dir('demo-master') {
+//           sh './gradlew javadoc'
+//         }
+//       }
+//     }
+
+
+
+//   stage('Build Docker Image') {
+//       steps {
+//           dir('demo-master') {
+//               script {
+//                   // Calculate short commit hash once
+//                   def shortCommit = env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : 'latest'
+                  
+//                   // Use the variable in shell command
+//                   sh "docker build -t ${DOCKER_IMAGE_NAME}:${shortCommit} ."
+//               }
+//           }
+//       }
+//   }
+
+//   stage('Push Docker Image') {
+//       steps {
+//           script {
+//               // Calculate short commit hash once
+//               def shortCommit = env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : 'latest'
+              
+//               withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', 
+//                                                 usernameVariable: 'DOCKER_USERNAME', 
+//                                                 passwordVariable: 'DOCKER_PASSWORD')]) {
+//                   sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+//                   sh "docker push ${DOCKER_IMAGE_NAME}:${shortCommit}"
+//               }
+//           }
+//       }
+//   }
+
+
+//   }
+  
+//   post {
+//     always {
+//       archiveArtifacts artifacts: 'demo-master/build-artifact/**/*', allowEmptyArchive: true
+//     }
+//   }
+// }
+
+
+
 pipeline {
   agent any
   
   environment {
     DOCKER_HUB_CREDS = credentials('docker-hub-credentials')
     DOCKER_IMAGE_NAME = "aryanmogera/ensf_finalproject"
+    ARTIFACT_DIR = "build-artifact"
   }
 
   stages {
+    stage('Initialize') {
+      steps {
+        // Create the artifact directory structure
+        dir('demo-master') {
+          sh 'mkdir -p ${ARTIFACT_DIR}/test-results'
+          sh 'mkdir -p ${ARTIFACT_DIR}/sonarqube'
+          sh 'mkdir -p ${ARTIFACT_DIR}/security'
+          sh 'mkdir -p ${ARTIFACT_DIR}/performance'
+          sh 'mkdir -p ${ARTIFACT_DIR}/javadoc'
+        }
+      }
+    }
+    
     stage('Build') { 
       steps { 
         dir('demo-master') {
           sh 'chmod +x ./gradlew'
           sh './gradlew clean assemble'
+          // Copy build outputs to artifact directory
+          sh 'mkdir -p ${ARTIFACT_DIR}/build'
+          sh 'cp -r build/libs/* ${ARTIFACT_DIR}/build/ || true'
         }
       } 
     }
@@ -180,7 +343,10 @@ pipeline {
       } 
       post { 
         always { 
-          junit 'demo-master/build/test-results/test/*.xml' 
+          junit 'demo-master/build/test-results/test/*.xml'
+          // Copy test results to artifact directory
+          sh 'cp -r demo-master/build/test-results/test/* demo-master/${ARTIFACT_DIR}/test-results/ || true'
+          sh 'cp -r demo-master/build/reports/tests/* demo-master/${ARTIFACT_DIR}/test-results/reports/ || true'
         } 
       } 
     }
@@ -189,15 +355,18 @@ pipeline {
       steps {
         dir('demo-master') { 
           sh './gradlew sonarqube -Dsonar.host.url=https://didactic-garbanzo-76jj64566gvfww76-9000.app.github.dev/ -Dsonar.login=admin -Dsonar.password=qwerty123'
+          // Copy SonarQube reports to artifact directory
+          sh 'cp -r build/sonar/* ${ARTIFACT_DIR}/sonarqube/ || true'
         }
       } 
     }
     
-    // Continue with the same pattern for all other stages
     stage('Security Analysis') { 
       steps {
         dir('demo-master') { 
           sh './gradlew dependencyCheckAnalyze'
+          // Copy security reports to artifact directory
+          sh 'cp -r build/reports/dependency-check-* ${ARTIFACT_DIR}/security/ || true'
         }
       } 
     }
@@ -244,6 +413,10 @@ pipeline {
                 # Run the performance tests with the temporary task
                 ./gradlew -I temp_performance_task.gradle runPerfTests
             '''
+            
+            // Copy performance test results to artifact directory
+            sh 'cp -r build/jmeter_perf_test.csv ${ARTIFACT_DIR}/performance/ || true'
+            sh 'cp -r build/reports/perf_report/* ${ARTIFACT_DIR}/performance/report/ || true'
             }
         }
     }
@@ -252,13 +425,13 @@ pipeline {
       steps {
         dir('demo-master') {
           sh './gradlew javadoc'
+          // Copy javadoc to artifact directory
+          sh 'cp -r build/docs/javadoc/* ${ARTIFACT_DIR}/javadoc/ || true'
         }
       }
     }
 
-
-
-  stage('Build Docker Image') {
+    stage('Build Docker Image') {
       steps {
           dir('demo-master') {
               script {
@@ -267,47 +440,51 @@ pipeline {
                   
                   // Use the variable in shell command
                   sh "docker build -t ${DOCKER_IMAGE_NAME}:${shortCommit} ."
+                  
+                  // Save Docker image information to artifacts
+                  sh "docker inspect ${DOCKER_IMAGE_NAME}:${shortCommit} > ${ARTIFACT_DIR}/docker-image-info.json || true"
               }
           }
       }
-  }
+    }
 
-  stage('Push Docker Image') {
+    stage('Push Docker Image') {
       steps {
           script {
               // Calculate short commit hash once
               def shortCommit = env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : 'latest'
               
               withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', 
-                                                usernameVariable: 'DOCKER_USERNAME', 
-                                                passwordVariable: 'DOCKER_PASSWORD')]) {
+                                              usernameVariable: 'DOCKER_USERNAME', 
+                                              passwordVariable: 'DOCKER_PASSWORD')]) {
                   sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
                   sh "docker push ${DOCKER_IMAGE_NAME}:${shortCommit}"
+                  
+                  // Save push information to artifacts
+                  sh "echo 'Docker image ${DOCKER_IMAGE_NAME}:${shortCommit} pushed to Docker Hub' > ${ARTIFACT_DIR}/docker-push-info.txt"
               }
           }
       }
-  }
-
-  stage('Deploy to Test') {
-      when {
-          branch 'development'
-      }
-      steps {
-          script {
-              // Calculate short commit hash once
-              def shortCommit = env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : 'latest'
-              
-              sh "docker pull ${DOCKER_IMAGE_NAME}:${shortCommit}"
-              sh "docker stop demo-app || true"
-              sh "docker rm demo-app || true"
-              sh "docker run -d -p 8081:8080 --name demo-app ${DOCKER_IMAGE_NAME}:${shortCommit}"
-          }
-      }
-  }
+    }
   }
   
   post {
     always {
+      // Create a summary file with build information
+      dir('demo-master') {
+        sh '''
+          echo "Build Summary" > ${ARTIFACT_DIR}/build-summary.txt
+          echo "==============" >> ${ARTIFACT_DIR}/build-summary.txt
+          echo "Build ID: ${BUILD_ID}" >> ${ARTIFACT_DIR}/build-summary.txt
+          echo "Build URL: ${BUILD_URL}" >> ${ARTIFACT_DIR}/build-summary.txt
+          echo "Build Time: $(date)" >> ${ARTIFACT_DIR}/build-summary.txt
+          echo "Git Commit: ${GIT_COMMIT}" >> ${ARTIFACT_DIR}/build-summary.txt
+          echo "" >> ${ARTIFACT_DIR}/build-summary.txt
+          echo "All artifacts are stored in respective directories." >> ${ARTIFACT_DIR}/build-summary.txt
+        '''
+      }
+      
+      // Archive all artifacts
       archiveArtifacts artifacts: 'demo-master/build-artifact/**/*', allowEmptyArchive: true
     }
   }
